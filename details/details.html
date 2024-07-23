@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Details</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: 2px solid #dbdbdb;
+        }
+        .card-body h4{
+          color: rgb(20, 18, 18);
+          font-family: "Roboto Condensed", sans-serif;
+          font-weight: 900;
+          font-size: 80px;
+          background-color: #d6dbe6;
+          padding: 17px 10px;
+          width:fit-content;
+          border-radius: 20px;
+          align-content: center;
+        }
+
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 0 15px;
+        }
+        .image-preview {
+            width: 100%;
+            height: auto;
+            border-radius: 15px;
+            cursor: pointer;
+            object-fit: cover;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .image-preview:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        .btn-back {
+            background-color: #b30000;
+            color: white;
+            border: none;
+            transition: background-color 0.3s;
+            border-radius: 10px;
+        }
+        .btn-back:hover {
+            background-color: #800000;
+        }
+        .modal-content {
+            border-radius: 15px;
+            max-height: 90vh;
+            padding: 0;
+        }
+        .modal-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+        }
+        .modal-body img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 15px;
+            cursor: zoom-in;
+        }
+        .zoomed {
+            cursor: zoom-out;
+            transform: scale(2);
+            transition: transform 0.3s;
+        }
+        .details-section {
+            margin: 20px 0;
+        }
+        .details-section h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .details-section p {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        .call-button {
+            display: none;
+            margin-top: 20px;
+            font-size: 1.2rem;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .call-button:hover {
+            background-color: #0056b3;
+        }
+  
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-body">
+                <button type="button" class="btn btn-back mb-4" onclick="window.history.back()">Back</button>
+                <div id="image-container" class="image-grid"></div>
+                <div class="details-section">
+                    <h4 id="post-title">Model:</h4>
+                    <p id="post-details">Details:</p>       
+                    <h5 id="post-amount">Amount:</h5>
+                    <h5 id="post-phone">Phone:</h5>
+                </div>
+                <button id="call-button" class="call-button">Call</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Image Preview -->
+    <div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">Image Preview</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <img id="modal-image" src="" alt="Image Preview">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/7.14.2/firebase.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAK-dzBJ9sIwgQJ7iR0Kh_MvOLy7i-F3O0",
+            authDomain: "blog-ad58e.firebaseapp.com",
+            databaseURL: "https://blog-ad58e-default-rtdb.firebaseio.com",
+            projectId: "blog-ad58e",
+            storageBucket: "blog-ad58e.appspot.com",
+            messagingSenderId: "921348005047",
+            appId: "1:921348005047:web:2d9797dae380482aa40132",
+            measurementId: "G-WRESM9JHSG"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        function getPostData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const key = urlParams.get('key');
+
+            if (!key) {
+                alert('No post key found.');
+                return;
+            }
+
+            firebase.database().ref('blogs/' + key).once('value').then(function(snapshot) {
+                const post = snapshot.val();
+                document.getElementById('post-title').innerText = `Model: ${post.title}`;
+                document.getElementById('post-details').innerText = `Details: ${post.details}`;
+                document.getElementById('post-amount').innerText = `Amount: ${post.amount}`;
+                document.getElementById('post-phone').innerText = `Phone: ${post.phone}`;
+
+                const imageContainer = document.getElementById('image-container');
+                post.imageURLs.forEach((url) => {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.className = 'image-preview';
+                    img.onclick = function() {
+                        document.getElementById('modal-image').src = url;
+                        $('#imageModal').modal('show');
+                    };
+                    imageContainer.appendChild(img);
+                });
+
+                // Set up the call button with the phone number
+                const callButton = document.getElementById('call-button');
+                if (post.phone) {
+                    callButton.style.display = 'block'; // Show the button
+                    callButton.onclick = function() {
+                        window.location.href = `tel:${post.phone}`;
+                    };
+                }
+            }).catch(function(error) {
+                console.error('Error fetching post data:', error);
+            });
+        }
+
+        window.onload = getPostData;
+
+        // Zoom functionality for the image in the modal
+        document.getElementById('modal-image').addEventListener('click', function() {
+            this.classList.toggle('zoomed');
+        });
+    </script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.0.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
