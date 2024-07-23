@@ -205,7 +205,7 @@ function getdata() {
                 "<div class='card-body'>" +
                 "<h5 class='card-title'>" + value.title + "</h5>" +
                 "<p class='card-text'>" + value.amount + "</p>" +
-                "<a class='btn btn-primary mr-2 ' href='/details/details.html?key=" + key + "'>See More <i class='ri-shopping-cart-line'></i></a> " +
+                "<a class='btn btn-primary mr-2 ' href='details.html?key=" + key + "'>See More <i class='ri-shopping-cart-line'></i></a> " +
                 "<button class='btn btn-danger  ' id='" + key + "' onclick='delete_post(this.id)'>Delete <i class='ri-delete-bin-line'></i></button>" +
                 "</div></div></div>";
         }
